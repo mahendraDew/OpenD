@@ -5,6 +5,8 @@ import { idlFactory } from "../../../declarations/nft";
 import { Principal } from "@dfinity/principal";
 import Button from "./Button";
 import { opend } from "../../../declarations/opend/index";
+import CURRENT_USER_ID from "../index";
+import PriceLable from "./PriceLabel";
 
 
 function Item(props) { 
@@ -16,6 +18,7 @@ function Item(props) {
   const [priceInput, setPriceInput] = useState();
   const [loaderHidden, setLoaderHidden] = useState(true);
   const [blur, setBlur] = useState();
+  const [priceLable, setPriceLable] = useState();
 
   const id = props.id;
 
@@ -40,22 +43,35 @@ function Item(props) {
 
     const imageContent = new Uint8Array(imageData);  // this convert the Nat8 into something that is recognizable by js
     const image = URL.createObjectURL(new Blob([imageContent.buffer], {type: "image/png"}));
+
     setOwner(owner.toText());
     setName(name);
     setImage(image);
 
-    const nftIsListed = await opend.isListed(props.id);
-    console.log("nftIsListed:"+nftIsListed);
-    if(nftIsListed){
-      setOwner("OpenD");
-      setBlur({filter: "blur(4px)"});
-    }else{
-      setButton(<Button handleClick={handleSell} text={"sell"} />);
+    if(props.role == "collection"){
+      const nftIsListed = await opend.isListed(props.id);
+      console.log("nftIsListed:"+nftIsListed);
+      if(nftIsListed){
+        setOwner("OpenD");
+        setBlur({filter: "blur(4px)"});
+      }else{
+        setButton(<Button handleClick={handleSell} text={"sell"} />);
+
+      }
+    }else if(props.role == "discover"){
+      console.log("in discover page")
+      const originalOwner = await opend.getOriginalOwner(props.id);
+      
+      if(originalOwner.toText() != CURRENT_USER_ID.toText()){
+        setButton(<Button handleClick={handleBuy} text={"Buy"} />);
+      }
+
+      const price = await opend.getListedNFTPrice(props.id);
+      setPriceLable(<PriceLable sellPrice={price.toString()} />);
+      
 
     }
     
-
-
   }
   // it will ensure the loadNFT() will call only onces
   useEffect(()=>{
@@ -97,6 +113,13 @@ function Item(props) {
     }
   }
 
+
+  async function handleBuy(){
+    console.log("buy was trigger");
+  }
+
+
+
   return (
     <div className="disGrid-item">
       <div className="disPaper-root disCard-root makeStyles-root-17 disPaper-elevation1 disPaper-rounded">
@@ -112,6 +135,7 @@ function Item(props) {
         <div></div>
       </div>
         <div className="disCardContent-root">
+          {priceLable}
           <h2 className="disTypography-root makeStyles-bodyText-24 disTypography-h5 disTypography-gutterBottom">
             {name}<span className="purple-text"></span>
           </h2>

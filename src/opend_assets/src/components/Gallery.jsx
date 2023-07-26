@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Item from "./Item";
 import { Principal } from "@dfinity/principal";
+import Button from "./Button";
 
 function Gallery(props) {
 
@@ -11,7 +12,7 @@ function Gallery(props) {
     if(props.ids != undefined){
       setItems(
         props.ids.map((NFTId) =>(
-          <Item id={NFTId} key={NFTId.toText()}/>
+          <Item id={NFTId} key={NFTId.toText()} role={props.role}/>
         ))
       )
     }
@@ -30,7 +31,7 @@ function Gallery(props) {
           <div className="disGrid-root disGrid-container disGrid-spacing-xs-5 disGrid-justify-content-xs-center">
             {items}
           </div>
-          
+          {Button}
         </div>
       </div>
     </div>
