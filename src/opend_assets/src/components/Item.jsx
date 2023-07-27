@@ -7,6 +7,7 @@ import Button from "./Button";
 import { opend } from "../../../declarations/opend/index";
 import CURRENT_USER_ID from "../index";
 import PriceLable from "./PriceLabel";
+import { idlFactory as tokenIdlFactory } from "../../../declarations/token";
 
 
 function Item(props) { 
@@ -19,6 +20,7 @@ function Item(props) {
   const [loaderHidden, setLoaderHidden] = useState(true);
   const [blur, setBlur] = useState();
   const [priceLable, setPriceLable] = useState();
+  const [shouldDisplay, setDisplay] = useState(true);
 
   const id = props.id;
 
@@ -116,12 +118,27 @@ function Item(props) {
 
   async function handleBuy(){
     console.log("buy was trigger");
+    setLoaderHidden(false);
+    const tokenActor = await Actor.createActor(tokenIdlFactory, {
+      agent,
+      canisterId: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+    });
+
+    const sellerID = await opend.getOriginalOwner(props.id);
+    const itemPrice = await  opend.getListedNFTPrice(props.id);
+
+    const result = await tokenActor.transfer(sellerID, itemPrice);
+    if(result == "Success"){
+      // transfer the ownership
+      const transferResult = await opend.completePurchase(props.id, sellerID, CURRENT_USER_ID);
+      console.log("purchase: "+ transferResult);
+      setLoaderHidden(true);
+      setDisplay(false);
+    }
   }
 
-
-
   return (
-    <div className="disGrid-item">
+    <div style={{display: shouldDisplay ? "inline" : "none"}} className="disGrid-item">
       <div className="disPaper-root disCard-root makeStyles-root-17 disPaper-elevation1 disPaper-rounded">
         <img
           className="disCardMedia-root makeStyles-image-19 disCardMedia-media disCardMedia-img"
